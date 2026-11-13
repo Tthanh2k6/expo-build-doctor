@@ -1,0 +1,37 @@
+{
+  "name": "expo-build-doctor",
+  "version": "0.1.0",
+  "description": "Zero-dependency static pre-flight checker for Expo app.json, eas.json, and store submission readiness before running eas build.",
+  "type": "module",
+  "main": "./src/index.js",
+  "bin": {
+    "expo-build-doctor": "./bin/expo-build-doctor.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "expo",
+    "eas",
+    "eas-build",
+    "react-native",
+    "app-store",
+    "google-play",
+    "cli"
+  ],
+  "author": "Trung Thanh Tran",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tthanh2k6/expo-build-doctor.git"
+  }
+}
