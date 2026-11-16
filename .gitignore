@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 *.log
 coverage/
+
+# Internal notes, kept local
+YEU_CAU*.md

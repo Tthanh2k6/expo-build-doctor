@@ -1,44 +1,14 @@
 # expo-build-doctor
 
-Zero-dependency Node.js CLI (`Node >= 20`) that runs static pre-flight checks on an Expo project's `app.json`, `eas.json`, and `package.json` before you wait on an `eas build` queue or hit App Store / Google Play rejections.
-
-## Why It Exists
-
-`npx expo-doctor` checks your project health and dependency directory status, while many cloud build or store submission failures come from configuration mismatches across `app.json`, `eas.json`, and `package.json`:
-
-- A `production` EAS profile set to `"buildType": "apk"`, which Google Play rejects instead of an `.aab`.
-- An `"internal"` distribution profile set to `"app-bundle"`, which fails to produce an installable Expo link.
-- Missing `ios.config.usesNonExemptEncryption` / `ITSAppUsesNonExemptEncryption`, stalling TestFlight and App Store Connect processing.
-- Missing `cli.appVersionSource`, or pairing `"appVersionSource": "remote"` with `"runtimeVersion": { "policy": "nativeVersion" }`.
-- Missing local files referenced in `icon`, `googleServicesFile`, or `expo-splash-screen`.
-- Deprecated config options on newer SDKs (`newArchEnabled: false` on SDK 55+, `expo-build-properties` `ios.deploymentTarget` on SDK 56+).
-
-Every rule in `expo-build-doctor` checks directly against documented behavior in the official [Expo configuration](https://docs.expo.dev/versions/latest/config/app/) and [EAS JSON](https://docs.expo.dev/eas/json/) references.
-
-## Quick Start
-
-Run inside any Expo project directory:
+A Node.js CLI (Node 20 or newer, no dependencies) that reads an Expo project's `app.json`, `eas.json` and `package.json` and reports configuration problems that tend to fail `eas build` or store submission. It is for Expo developers who want to catch these before waiting in the build queue. It does not run your project code and does not use the network.
 
 ```bash
 npx expo-build-doctor
 ```
 
-Point it at another folder or fail CI on warnings as well:
+## Example
 
-```bash
-npx expo-build-doctor ./apps/mobile --fail-on warnings
-```
-
-For projects using a dynamic `app.config.js` or `app.config.ts`, export the resolved JSON with Expo CLI first and pass it explicitly:
-
-```bash
-npx expo config --json > .expo-config.json
-npx expo-build-doctor --app-config .expo-config.json
-```
-
-## Example Output
-
-Real run on [expo-upgrade-casebook](https://github.com/Tthanh2k6/expo-upgrade-casebook) (Expo SDK 58):
+Run on [expo-upgrade-casebook](https://github.com/Tthanh2k6/expo-upgrade-casebook) (Expo SDK 58):
 
 ```text
 expo-build-doctor v0.1.0 — D:\Project\1-dang-ban\expo-upgrade-casebook
@@ -47,12 +17,12 @@ Files: app.config.js (unparsed), eas.json, package.json | Expo SDK: 58
 [ERROR] EBD-EAS-003 (eas.json:development) — developmentClient enabled in "development" without expo-dev-client
         Profile "development" sets developmentClient: true, but `expo-dev-client` is missing from package.json.
         Fix: Install `expo-dev-client` (`npx expo install expo-dev-client`) or set `developmentClient: false`.
-[WARN]  EBD-VER-001 (eas.json) — cli.appVersionSource is not set in eas.json
-        eas.json omits cli.appVersionSource. EAS CLI warns this will be required in future versions and defaults to "local".
-        Fix: Set `cli.appVersionSource` to "remote" (recommended since EAS CLI 12.0.0) or "local".
 [WARN]  EBD-EAS-004 (eas.json:development) — channel has no effect with developmentClient: true in "development"
         Profile "development" sets channel "development" alongside developmentClient: true; development builds can load updates from any channel.
         Fix: Remove `channel` from the development client profile or separate preview/production profiles.
+[WARN]  EBD-VER-001 (eas.json) — cli.appVersionSource is not set in eas.json
+        eas.json omits cli.appVersionSource. EAS CLI warns this will be required in future versions and defaults to "local".
+        Fix: Set `cli.appVersionSource` to "remote" (recommended since EAS CLI 12.0.0) or "local".
 [INFO]  EBD-CFG-004 (app.config.js) — Dynamic app config not executed statically
         app.config.js is present without static app.json/app.config.json. JS/TS configs are not executed for security.
         Fix: Run `npx expo config --json > .expo-config.json` and pass `--app-config .expo-config.json` to audit resolved values.
@@ -60,7 +30,35 @@ Files: app.config.js (unparsed), eas.json, package.json | Expo SDK: 58
 Summary: 1 error(s), 2 warning(s), 1 info
 ```
 
-## CLI Usage
+## What it catches
+
+`npx expo-doctor` checks project health and dependency versions. This tool looks at mismatches between the three config files, for example:
+
+- A `production` profile with `"buildType": "apk"`, which Google Play does not accept in place of an `.aab`.
+- An `internal` distribution profile with `"app-bundle"`, which cannot produce an installable build.
+- No `ios.config.usesNonExemptEncryption` / `ITSAppUsesNonExemptEncryption`, which holds up TestFlight processing.
+- No `cli.appVersionSource`, or `"remote"` combined with `runtimeVersion.policy: "nativeVersion"`.
+- A missing file referenced by `icon`, `googleServicesFile` or `expo-splash-screen`.
+- Options deprecated on newer SDKs (`newArchEnabled: false` on SDK 55+, `ios.deploymentTarget` in `expo-build-properties` on SDK 56+).
+
+There are 21 rule IDs, listed below. They follow the [Expo app config](https://docs.expo.dev/versions/latest/config/app/) and [eas.json](https://docs.expo.dev/eas/json/) references.
+
+## Usage
+
+Check another folder and exit with `1` on warnings too:
+
+```bash
+npx expo-build-doctor ./apps/mobile --fail-on warnings
+```
+
+For a dynamic `app.config.js` or `app.config.ts`, export the resolved config first and pass it in:
+
+```bash
+npx expo config --json > .expo-config.json
+npx expo-build-doctor --app-config .expo-config.json
+```
+
+## Options
 
 ```text
 expo-build-doctor [project-dir] [options]
@@ -85,7 +83,7 @@ expo-build-doctor [project-dir] [options]
 - `1`: One or more findings matched `--fail-on`.
 - `2`: Invalid CLI flag, missing target path, or invalid JSON config.
 
-## Rules Checked
+## Rules
 
 | Code | Severity | What It Checks |
 | :--- | :--- | :--- |
@@ -113,10 +111,11 @@ expo-build-doctor [project-dir] [options]
 
 ## Limitations
 
-- Dynamic JavaScript/TypeScript configs (`app.config.js`, `app.config.ts`) are not executed directly because running untrusted project code could read environment files or trigger side effects. Pass the output of `npx expo config --json` via `--app-config` when auditing dynamic configs.
-- Only static configuration files and local asset paths are checked. Provisioning profiles, Android keystores, Google Play service account keys, and remote Expo dashboard settings are out of scope.
-- Use alongside `npx expo-doctor` and `rn-upgrade-check`, which handle package directory and native dependency compatibility checks.
+- `app.config.js` and `app.config.ts` are not executed, since that would run project code. Use `npx expo config --json` with `--app-config` instead.
+- Only static config files and local asset paths are checked. Provisioning profiles, Android keystores, Google Play service account keys and settings on the Expo dashboard are not looked at.
+- Dependency compatibility is out of scope; use `npx expo-doctor` for that.
+- This is v0.1.0 with 26 offline tests (`npm test`), so expect gaps.
 
 ## License
 
-MIT License (2026, Trung Thanh Tran). See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
