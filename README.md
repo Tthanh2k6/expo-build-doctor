@@ -11,7 +11,7 @@ npx expo-build-doctor
 Run on [expo-upgrade-casebook](https://github.com/Tthanh2k6/expo-upgrade-casebook) (Expo SDK 58):
 
 ```text
-expo-build-doctor v0.1.0 — D:\Project\1-dang-ban\expo-upgrade-casebook
+expo-build-doctor v0.1.0 — ~/code/expo-upgrade-casebook
 Files: app.config.js (unparsed), eas.json, package.json | Expo SDK: 58
 
 [ERROR] EBD-EAS-003 (eas.json:development) — developmentClient enabled in "development" without expo-dev-client
